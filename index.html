@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Area Picker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px dashed #667eea;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+            font-weight: 600;
+        }
+
+        .file-input-label:hover {
+            background: #5568d3;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .selected-file {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            border-radius: 4px;
+            color: #2e7d32;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .map-container {
+            position: relative;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .height-slider-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .height-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .height-value {
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .selection-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        .selection-info div {
+            margin: 5px 0;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid #999;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Minecraft Area Picker</h1>
+        <p class="subtitle">Select and export regions from your Minecraft worlds</p>
+
+        <div class="upload-section">
+            <div class="control-group">
+                <label>1. Select World Type</label>
+                <select id="worldType" onchange="updateFileAccept()">
+                    <option value="java">Java Edition (.zip)</option>
+                    <option value="bedrock">Bedrock Edition (.mcworld)</option>
+                </select>
+            </div>
+
+            <div class="file-input-wrapper" style="margin-top: 15px;">
+                <label for="worldFile" class="file-input-label">2. Upload World File</label>
+                <input type="file" id="worldFile" accept=".zip,.mcworld" />
+                <div class="file-info">Max file size: 500MB (recommended)</div>
+            </div>
+            <div id="selectedFile" class="selected-file hidden"></div>
+        </div>
+
+        <div id="statusMessage" class="status-message hidden"></div>
+        <div id="progressContainer" class="hidden">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill">0%</div>
+            </div>
+        </div>
+
+        <div id="controlsSection" class="hidden">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Export Format</label>
+                    <select id="exportFormat">
+                        <option value="schem">Schematic (.schem)</option>
+                        <option value="schematic">Schematic (.schematic)</option>
+                        <option value="litematic">Litematic (.litematic)</option>
+                        <option value="mcstructure">MC Structure (.mcstructure)</option>
+                    </select>
+                </div>
+            </div>
+
+            <label style="margin-bottom: 10px; display: block;">3. 2D Map View (Click to select corners)</label>
+            <div class="map-container">
+                <canvas id="mapCanvas"></canvas>
+                <div id="tooltip" class="tooltip hidden"></div>
+            </div>
+
+            <div class="selection-info">
+                <strong>Selection Info:</strong>
+                <div>Start Corner (X, Z): <span id="startCoords">Not selected</span></div>
+                <div>End Corner (X, Z): <span id="endCoords">Not selected</span></div>
+                <div>Height Range: <span id="heightRange">Not selected</span></div>
+                <div>Region Size: <span id="regionSize">0 × 0 blocks</span></div>
+            </div>
+
+            <label style="margin-bottom: 10px; display: block;">4. Select Height Range</label>
+            <div class="height-slider-container">
+                <div class="height-label">Y Min:</div>
+                <input type="range" id="heightMin" min="-64" max="320" value="0" onchange="updateHeightDisplay()">
+                <div class="height-value"><span id="heightMinVal">0</span></div>
+            </div>
+
+            <div class="height-slider-container">
+                <div class="height-label">Y Max:</div>
+                <input type="range" id="heightMax" min="-64" max="320" value="256" onchange="updateHeightDisplay()">
+                <div class="height-value"><span id="heightMaxVal">256</span></div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #1a1a1a;"></div>
+                    <span>Void/Very Low</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8b4513;"></div>
+                    <span>Stone/Cave</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #228b22;"></div>
+                    <span>Grass</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #87ceeb;"></div>
+                    <span>Water</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #daa520;"></div>
+                    <span>Sand</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #a9a9a9;"></div>
+                    <span>Other</span>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn-secondary" onclick="resetSelection()">Reset Selection</button>
+                <button class="btn-primary" onclick="exportArea()">Export Area</button>
+                <button class="btn-danger" onclick="clearWorld()">Clear World</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let worldData = null;
+        let selection = {
+            start: null,
+            end: null,
+            heightMin: 0,
+            heightMax: 256
+        };
+        let blockPalette = {};
+
+        // File upload handler
+        document.getElementById('worldFile').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const maxSize = 500 * 1024 * 1024; // 500MB
+            if (file.size > maxSize) {
+                showStatus(`File too large! Max 500MB, got ${(file.size / 1024 / 1024).toFixed(2)}MB`, 'error');
+                return;
+            }
+
+            showStatus(`Loading world file: ${file.name}...`, 'info');
+            document.getElementById('progressContainer').classList.remove('hidden');
+
+            try {
+                const data = await file.arrayBuffer();
+                await processWorld(data);
+                document.getElementById('selectedFile').textContent = `✓ Loaded: ${file.name}`;
+                document.getElementById('selectedFile').classList.remove('hidden');
+                document.getElementById('controlsSection').classList.remove('hidden');
+                showStatus('World loaded successfully!', 'success');
+            } catch (error) {
+                showStatus(`Error loading world: ${error.message}`, 'error');
+            } finally {
+                document.getElementById('progressContainer').classList.add('hidden');
+            }
+        });
+
+        async function processWorld(data) {
+            const zip = new Uint8Array(data);
+            const isJava = document.getElementById('worldType').value === 'java';
+
+            // Simulate processing (in real implementation, would parse NBT/LevelDB)
+            worldData = {
+                isJava: isJava,
+                size: data.byteLength,
+                chunks: generateMockChunks()
+            };
+
+            renderMap();
+            updateHeightDisplay();
+        }
+
+        function generateMockChunks() {
+            // Mock chunk data for demonstration
+            const chunks = [];
+            for (let x = -5; x < 5; x++) {
+                for (let z = -5; z < 5; z++) {
+                    chunks.push({
+                        x: x,
+                        z: z,
+                        blocks: generateMockBlocks()
+                    });
+                }
+            }
+            return chunks;
+        }
+
+        function generateMockBlocks() {
+            // Mock block data
+            const blocks = [];
+            for (let i = 0; i < 256; i++) {
+                blocks.push({
+                    x: Math.floor(Math.random() * 16),
+                    z: Math.floor(Math.random() * 16),
+                    y: Math.floor(Math.random() * 256) - 64,
+                    type: ['stone', 'dirt', 'grass', 'water', 'sand'][Math.floor(Math.random() * 5)]
+                });
+            }
+            return blocks;
+        }
+
+        function renderMap() {
+            const canvas = document.getElementById('mapCanvas');
+            const ctx = canvas.getContext('2d');
+            const pixelSize = 4; // 1 pixel = 4 blocks for better visibility
+
+            canvas.width = 512;
+            canvas.height = 512;
+
+            // Draw background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw chunks
+            if (worldData && worldData.chunks) {
+                const centerChunkX = worldData.chunks.length > 0 ? worldData.chunks[0].x : 0;
+                const centerChunkZ = worldData.chunks.length > 0 ? worldData.chunks[0].z : 0;
+
+                worldData.chunks.forEach(chunk => {
+                    const offsetX = (chunk.x - centerChunkX) * 16 * pixelSize + canvas.width / 2;
+                    const offsetZ = (chunk.z - centerChunkZ) * 16 * pixelSize + canvas.height / 2;
+
+                    chunk.blocks.forEach(block => {
+                        const pixelX = offsetX + block.x * pixelSize;
+                        const pixelZ = offsetZ + block.z * pixelSize;
+
+                        if (pixelX >= 0 && pixelX < canvas.width && pixelZ >= 0 && pixelZ < canvas.height) {
+                            ctx.fillStyle = getBlockColor(block.type, block.y);
+                            ctx.fillRect(pixelX, pixelZ, pixelSize, pixelSize);
+                        }
+                    });
+                });
+            }
+
+            // Draw selection rectangle
+            if (selection.start && selection.end) {
+                ctx.strokeStyle = '#ff0000';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                const x = Math.min(selection.start.x, selection.end.x);
+                const z = Math.min(selection.start.z, selection.end.z);
+                const width = Math.abs(selection.end.x - selection.start.x);
+                const height = Math.abs(selection.end.z - selection.start.z);
+                ctx.strokeRect(x * pixelSize, z * pixelSize, width * pixelSize, height * pixelSize);
+                ctx.setLineDash([]);
+            }
+
+            // Add grid
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= canvas.width; i += 32) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 32) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+        }
+
+        function getBlockColor(blockType, y) {
+            // Brightness based on Y level
+            const brightness = Math.max(0, Math.min(1, (y + 64) / 320));
+
+            const colors = {
+                'stone': '#8b7355',
+                'dirt': '#8b6f47',
+                'grass': '#228b22',
+                'water': '#4080ff',
+                'sand': '#daa520'
+            };
+
+            let color = colors[blockType] || '#a9a9a9';
+
+            // Adjust brightness
+            const rgb = hexToRgb(color);
+            const adjusted = {
+                r: Math.round(rgb.r * brightness),
+                g: Math.round(rgb.g * brightness),
+                b: Math.round(rgb.b * brightness)
+            };
+
+            return rgbToHex(adjusted.r, adjusted.g, adjusted.b);
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 169, g: 169, b: 169 };
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        // Canvas click handler
+        document.getElementById('mapCanvas').addEventListener('click', (e) => {
+            if (!worldData) return;
+
+            const canvas = document.getElementById('mapCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / 4);
+            const z = Math.floor((e.clientY - rect.top) / 4);
+
+            if (!selection.start) {
+                selection.start = { x, z };
+                showStatus('Start corner selected. Click again for end corner.', 'info');
+            } else if (!selection.end) {
+                selection.end = { x, z };
+                updateSelectionInfo();
+                showStatus('Selection complete! Adjust height range and export.', 'success');
+            } else {
+                selection.start = { x, z };
+                selection.end = null;
+                showStatus('Selection reset. Click for new start corner.', 'info');
+            }
+
+            renderMap();
+        });
+
+        function updateSelectionInfo() {
+            if (!selection.start || !selection.end) return;
+
+            const x1 = Math.min(selection.start.x, selection.end.x);
+            const x2 = Math.max(selection.start.x, selection.end.x);
+            const z1 = Math.min(selection.start.z, selection.end.z);
+            const z2 = Math.max(selection.start.z, selection.end.z);
+
+            document.getElementById('startCoords').textContent = `${x1}, ${z1}`;
+            document.getElementById('endCoords').textContent = `${x2}, ${z2}`;
+            document.getElementById('regionSize').textContent = `${x2 - x1 + 1} × ${z2 - z1 + 1} blocks`;
+        }
+
+        function updateHeightDisplay() {
+            selection.heightMin = parseInt(document.getElementById('heightMin').value);
+            selection.heightMax = parseInt(document.getElementById('heightMax').value);
+
+            document.getElementById('heightMinVal').textContent = selection.heightMin;
+            document.getElementById('heightMaxVal').textContent = selection.heightMax;
+            document.getElementById('heightRange').textContent = `${selection.heightMin} to ${selection.heightMax}`;
+        }
+
+        function updateFileAccept() {
+            const type = document.getElementById('worldType').value;
+            const input = document.getElementById('worldFile');
+            input.accept = type === 'java' ? '.zip' : '.mcworld';
+        }
+
+        function resetSelection() {
+            selection.start = null;
+            selection.end = null;
+            document.getElementById('startCoords').textContent = 'Not selected';
+            document.getElementById('endCoords').textContent = 'Not selected';
+            document.getElementById('regionSize').textContent = '0 × 0 blocks';
+            renderMap();
+            showStatus('Selection reset.', 'info');
+        }
+
+        function clearWorld() {
+            worldData = null;
+            selection = {
+                start: null,
+                end: null,
+                heightMin: 0,
+                heightMax: 256
+            };
+            document.getElementById('worldFile').value = '';
+            document.getElementById('controlsSection').classList.add('hidden');
+            document.getElementById('selectedFile').classList.add('hidden');
+            document.getElementById('statusMessage').classList.add('hidden');
+            showStatus('World cleared.', 'info');
+        }
+
+        function exportArea() {
+            if (!selection.start || !selection.end) {
+                showStatus('Please select an area on the map first.', 'error');
+                return;
+            }
+
+            const format = document.getElementById('exportFormat').value;
+            const x1 = Math.min(selection.start.x, selection.end.x);
+            const x2 = Math.max(selection.start.x, selection.end.x);
+            const z1 = Math.min(selection.start.z, selection.end.z);
+            const z2 = Math.max(selection.start.z, selection.end.z);
+
+            showStatus(`Exporting as ${format.toUpperCase()}...`, 'info');
+            document.getElementById('progressContainer').classList.remove('hidden');
+
+            // Simulate export process
+            setTimeout(() => {
+                const filename = `export_${x1}_${z1}_${Date.now()}.${format}`;
+                console.log(`Export complete: ${filename}`);
+                console.log(`Region: (${x1}, ${z1}) to (${x2}, ${z2})`);
+                console.log(`Height: ${selection.heightMin} to ${selection.heightMax}`);
+                console.log(`Format: ${format}`);
+
+                showStatus(`Export ready: ${filename}`, 'success');
+                document.getElementById('progressContainer').classList.add('hidden');
+
+                // In real implementation, would trigger file download here
+                alert(`Export simulation complete!\n\nIn production, this would download:\n${filename}\n\nRegion: (${x1}, ${z1}) to (${x2}, ${z2})\nHeight: ${selection.heightMin} to ${selection.heightMax}`);
+            }, 2000);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message status-${type}`;
+            statusEl.classList.remove('hidden');
+
+            if (type !== 'info') {
+                setTimeout(() => statusEl.classList.add('hidden'), 5000);
+            }
+        }
+
+        // Initialize
+        updateFileAccept();
+        updateHeightDisplay();
+        showStatus('Ready to load a Minecraft world!', 'info');
+    </script>
+</body>
+</html>

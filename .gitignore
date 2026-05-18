@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+*.npm
+
+# World files (large)
+*.zip
+*.mcworld
+*.mcstructure
+*.schem
+*.schematic
+*.litematic
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.log
+tmp/
+temp/
+
+# Build outputs
+dist/
+build/
